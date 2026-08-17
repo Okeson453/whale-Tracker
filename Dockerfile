@@ -2,13 +2,13 @@ FROM python:3.12-slim
 
 WORKDIR /app
 
-# Install dependencies
+# Copy project metadata and source first so the package can be installed correctly
 COPY pyproject.toml ./
-RUN pip install --no-cache-dir -e .
-
-# Copy application code
 COPY app/ ./app/
 COPY data/ ./data/
+
+# Install dependencies after the app package is present
+RUN pip install --no-cache-dir -e .
 
 # Create data directory for SQLite
 RUN mkdir -p /app/data
