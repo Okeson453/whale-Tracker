@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import logging
 import sys
 from contextlib import asynccontextmanager
 from pathlib import Path
@@ -11,12 +12,36 @@ if __package__ in {None, ""}:
     if str(project_root) not in sys.path:
         sys.path.insert(0, str(project_root))
 
+import httpx
 from fastapi import FastAPI
 
-from app.config import validate_startup_config
+from app.config import env, validate_startup_config
 from app.ingestion.webhook_receiver import router as webhook_router
 from app.state.db import init_db
 from app.utils.logging_config import configure_logging
+
+logger = logging.getLogger(__name__)
+
+
+async def send_startup_message() -> None:
+    """Send a Telegram message to confirm the bot is alive and running."""
+    if not env.telegram_bot_token or not env.telegram_chat_id:
+        logger.info("Telegram credentials not configured; skipping startup message")
+        return
+
+    try:
+        async with httpx.AsyncClient() as client:
+            url = f"https://api.telegram.org/bot{env.telegram_bot_token}/sendMessage"
+            payload = {
+                "chat_id": env.telegram_chat_id,
+                "text": "🤖 Whale Tracker is online and monitoring for whale transactions.",
+                "parse_mode": "HTML",
+            }
+            response = await client.post(url, json=payload, timeout=10.0)
+            response.raise_for_status()
+            logger.info("Startup message sent to Telegram chat")
+    except Exception as exc:
+        logger.error("Failed to send startup message to Telegram: %s", exc)
 
 
 @asynccontextmanager
@@ -26,6 +51,7 @@ async def lifespan(app: FastAPI):
     # discovering it later as a runtime KeyError or a failed DB connection.
     validate_startup_config()
     await init_db()
+    await send_startup_message()
     yield
 
 
