@@ -14,7 +14,14 @@ _async_session_maker = None
 def _get_engine():
     global _engine
     if _engine is None:
-        _engine = create_async_engine(get_db_url(), echo=False, future=True)
+        # statement_cache_size=0 disables prepared statement caching,
+        # required when Postgres is behind PgBouncer in transaction/statement pooling mode
+        _engine = create_async_engine(
+            get_db_url(),
+            echo=False,
+            future=True,
+            connect_args={"statement_cache_size": 0},
+        )
     return _engine
 
 
