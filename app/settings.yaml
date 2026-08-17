@@ -1,0 +1,57 @@
+screening:
+  max_market_cap_usd: 5000000
+  min_liquidity_usd: 50000
+  max_rugcheck_score: 500
+  min_buy_usd: 500
+
+execution:
+  # approval_gate  — human taps Execute in Telegram for every alert (default, safest)
+  # whitelist_auto — auto-buy, gated by execution/whitelist.py (win-rate + min alerts)
+  # blind_auto     — auto-buy every passed-screen alert from every tracked wallet,
+  #                  no performance filter. Sells always auto-mirror once a
+  #                  position is open, regardless of mode — see copy_trade_engine.py.
+  mode: approval_gate
+  approval_window_seconds: 20
+  max_slippage_bps: 500
+  sell_slippage_bps: 500
+  position_cap_pct: 10
+
+circuit_breaker:
+  daily_loss_halt_pct: 20
+  max_trades_per_day: 5
+
+analytics:
+  confluence_window_seconds: 300
+  min_alerts_for_scorecard: 10
+
+whitelist:
+  min_pass_rate_pct: 60
+  min_observed_alerts: 20
+  max_auto_position_usd: 100
+
+monitoring:
+  webhook_silence_threshold_seconds: 300
+  enrichment_error_rate_threshold: 0.2
+
+wallet_clustering:
+  min_co_occurrences: 3
+  co_occurrence_window_seconds: 120
+
+narrative:
+  min_mention_count: 5
+  min_sentiment_score: 0
+
+dynamic_sizing:
+  min_position_usd: 50
+  max_position_usd: 500
+  min_pass_rate_pct_for_max: 80
+
+trailing_stop:
+  trail_pct: 15
+
+exposure_cap:
+  max_correlated_exposure_usd: 300
+
+post_trade_review:
+  slippage_deviation_bps_threshold: 200
+  fill_time_deviation_seconds_threshold: 5
