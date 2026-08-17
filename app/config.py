@@ -98,8 +98,21 @@ env = _EnvSettings()
 yaml_settings = _YamlSettings()
 
 
+def normalize_database_url(url: str | None) -> str:
+    """Accept Railway's default Postgres URL and upgrade it to the async driver.
+
+    Railway often injects a plain ``postgresql://`` URL for plugin-provided
+    databases. SQLAlchemy async usage requires the async driver explicitly,
+    so convert that URL to ``postgresql+asyncpg://`` before validation and
+    engine creation.
+    """
+    if not url:
+        return ""
+    return url.replace("postgresql://", "postgresql+asyncpg://", 1)
+
+
 def get_db_url() -> str:
-    return env.database_url
+    return normalize_database_url(env.database_url)
 
 
 class ConfigValidationError(Exception):
@@ -171,18 +184,19 @@ def validate_database_url(url: str | None = None) -> list[str]:
     failure mode of a malformed Postgres URL reaching aiosqlite/asyncpg
     at connection time instead of at startup.
     """
-    url = url if url is not None else env.database_url
+    raw_url = url if url is not None else env.database_url
+    normalized_url = normalize_database_url(raw_url)
     problems: list[str] = []
 
-    if not url:
+    if not normalized_url:
         problems.append("DATABASE_URL is empty")
         return problems
 
-    if "://" not in url:
-        problems.append(f"DATABASE_URL is not a valid URL: {url!r}")
+    if "://" not in normalized_url:
+        problems.append(f"DATABASE_URL is not a valid URL: {normalized_url!r}")
         return problems
 
-    scheme = url.split("://", 1)[0]
+    scheme = normalized_url.split("://", 1)[0]
     if "+" not in scheme:
         problems.append(
             f"DATABASE_URL scheme '{scheme}' is missing an async driver "
