@@ -27,8 +27,6 @@ packages = [
     "app", "app.ingestion", "app.enrichment", "app.screening",
     "app.notification", "app.execution", "app.state", "app.utils",
     "app.analytics", "app.simulation", "app.monitoring",
-    "scripts",
-    "tests", "tests.fixtures"
 ]
 
 [tool.pytest.ini_options]
