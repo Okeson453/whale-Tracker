@@ -105,10 +105,17 @@ def normalize_database_url(url: str | None) -> str:
     databases. SQLAlchemy async usage requires the async driver explicitly,
     so convert that URL to ``postgresql+asyncpg://`` before validation and
     engine creation.
+
+    Also strips ``pgbouncer=true`` query parameter, which is only recognized
+    by psycopg2 and causes TypeError with asyncpg.
     """
     if not url:
         return ""
-    return url.replace("postgresql://", "postgresql+asyncpg://", 1)
+    # Upgrade scheme to asyncpg
+    url = url.replace("postgresql://", "postgresql+asyncpg://", 1)
+    # Strip pgbouncer parameter (asyncpg doesn't support it)
+    url = url.replace("?pgbouncer=true", "").replace("&pgbouncer=true", "")
+    return url
 
 
 def get_db_url() -> str:
